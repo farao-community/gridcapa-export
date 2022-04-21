@@ -1,6 +1,6 @@
 spring:
   rabbitmq:
-    host: rabbitmq
+    host: localhost
     port: 5672
     username: gridcapa
     password: gridcapa
@@ -20,10 +20,12 @@ spring:
       definition: consumeTaskStatusUpdate
 
 task-manager:
-  base-url: http://localhost:8080
+  base-url: http://localhost/cse/idcc/task-manager
 ftp:
-  host: ${FTP_HOST:localhost}
-  port: ${FTP_PORT:0}
-  access-key: ${FTP_ACCESS_KEY:user}
-  secret-key: ${FTP_SECRET_KEY:password}
-  remote-destination-directory: ${FTP_REMOTE_DESTINATION_DIRECTORY:/data}
+  host: localhost
+  port: 21
+  access-key: gridcapa
+  secret-key: gridcapa
+  remote-destination-directory: /data/cse/idcc/outputs
+server:
+  port: 2020

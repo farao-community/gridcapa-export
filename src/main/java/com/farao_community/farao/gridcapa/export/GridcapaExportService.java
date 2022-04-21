@@ -19,11 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.web.client.RestTemplate;
@@ -60,6 +56,7 @@ public class GridcapaExportService {
 
     TaskStatusUpdate convertEvent(String eventString) {
         try {
+            LOGGER.info("event received: {}", eventString);
             return objectMapper.readValue(eventString, TaskStatusUpdate.class);
         } catch (JsonProcessingException e) {
             String errorMessage = String.format("parsing exception occurred while reading TaskStatusUpdate event '%s', event will be ignored", eventString);
@@ -70,20 +67,16 @@ public class GridcapaExportService {
 
     void transferSuccessfulTasksOutputs(TaskStatusUpdate taskStatusUpdate) {
         if (taskStatusUpdate.getTaskStatus().equals(TaskStatus.SUCCESS)) {
-            UUID taskId = taskStatusUpdate.getId();
-            // REST call to task-manager api returns ZipInputStream
-            String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskId.toString() + "/outputs").toUriString();
+            String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskStatusUpdate.getId() + "/outputs-by-id").toUriString();
             ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(outputsRestLocation, byte[].class);
-
-            Optional<List<String>> fileNames = Optional.ofNullable(responseEntity.getHeaders().get("filename"));
-            String zipOutputName = fileNames.map(names -> names.get(0)).orElse("outputs.zip");
-
-            InputStream is = new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody()));
+            String rawFileName = responseEntity.getHeaders().get("Content-Disposition").get(0);
+            String zipOutputName = rawFileName.substring(rawFileName.lastIndexOf("filename=") + 10, rawFileName.length() - 1);
             try {
                 ftpClientAdapter.open();
-                ftpClientAdapter.upload(zipOutputName, is);
+                ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
                 ftpClientAdapter.close();
             } catch (IOException e) {
+                LOGGER.error(e.getMessage());
                 throw new RuntimeException("Runtime exception: ", e);
             }
         }

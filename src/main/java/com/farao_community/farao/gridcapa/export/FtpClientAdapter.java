@@ -2,6 +2,8 @@ package com.farao_community.farao.gridcapa.export;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.io.InputStream;
 
 @Service
 public class FtpClientAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
     private final FTPClient ftp = new FTPClient();
@@ -28,14 +31,12 @@ public class FtpClientAdapter {
     }
 
     void upload(String fileName, InputStream inputStream) throws IOException {
-        ftp.storeFile(makeRemotePath(fileName), inputStream);
-    }
-
-    private String makeRemotePath(String fileName) {
-        if (ftpConfigurationProperties.getRemoteDestinationDirectory().endsWith("/")) {
-            return ftpConfigurationProperties.getRemoteDestinationDirectory() + fileName;
+        ftp.changeWorkingDirectory(ftpConfigurationProperties.getRemoteDestinationDirectory());
+        boolean successFlag = ftp.storeFile(fileName, inputStream);
+        if (successFlag) {
+            LOGGER.info("File {} copied successfully to FTP server", fileName);
         } else {
-            return ftpConfigurationProperties.getRemoteDestinationDirectory() + "/" + fileName;
+            LOGGER.error("File {} couldn't be copied  successfully to FTP server", fileName);
         }
     }
 
