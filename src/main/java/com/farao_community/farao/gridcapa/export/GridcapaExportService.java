@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.springframework.web.client.RestTemplate;
@@ -69,8 +70,9 @@ public class GridcapaExportService {
         if (taskStatusUpdate.getTaskStatus().equals(TaskStatus.SUCCESS)) {
             String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskStatusUpdate.getId() + "/outputs-by-id").toUriString();
             ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(outputsRestLocation, byte[].class);
-            String rawFileName = responseEntity.getHeaders().get("Content-Disposition").get(0);
-            String zipOutputName = rawFileName.substring(rawFileName.lastIndexOf("filename=") + 10, rawFileName.length() - 1);
+            String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
+            String fileNameHeaderIdentifier = "filename=";
+            String zipOutputName = rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length() + 1, rawFileName.length() - 1);
             try {
                 ftpClientAdapter.open();
                 ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
