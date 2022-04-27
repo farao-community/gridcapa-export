@@ -36,7 +36,7 @@ class GridcapaExportServiceTest {
     void checkFileNameRetrievedCorrectlyFromHeader() {
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
-        header.put("Content-Disposition", List.of("filename=out.zip"));
+        header.put("Content-Disposition", List.of("filename=\"out.zip\""));
         ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(
             "test-body".getBytes(StandardCharsets.UTF_8),
             header,

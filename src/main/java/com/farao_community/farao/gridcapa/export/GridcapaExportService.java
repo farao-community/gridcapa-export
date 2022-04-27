@@ -75,6 +75,6 @@ public class GridcapaExportService {
     String getZipNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
         String fileNameHeaderIdentifier = "filename=";
-        return rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length());
+        return rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length() + 1, rawFileName.length() - 1);
     }
 }
