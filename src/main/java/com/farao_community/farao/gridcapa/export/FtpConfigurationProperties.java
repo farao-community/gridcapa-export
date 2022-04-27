@@ -10,14 +10,14 @@ public class FtpConfigurationProperties {
     private int port;
     private String accessKey;
     private String secretKey;
-    private String remoteDestinationDirectory;
+    private String remoteRelativeDestinationDirectory;
 
-    public FtpConfigurationProperties(String host, int port, String accessKey, String secretKey, String remoteDestinationDirectory) {
+    public FtpConfigurationProperties(String host, int port, String accessKey, String secretKey, String remoteRelativeDestinationDirectory) {
         this.host = host;
         this.port = port;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
-        this.remoteDestinationDirectory = remoteDestinationDirectory;
+        this.remoteRelativeDestinationDirectory = remoteRelativeDestinationDirectory;
     }
 
     public String getHost() {
@@ -36,7 +36,7 @@ public class FtpConfigurationProperties {
         return secretKey;
     }
 
-    public String getRemoteDestinationDirectory() {
-        return remoteDestinationDirectory;
+    public String getRemoteRelativeDestinationDirectory() {
+        return remoteRelativeDestinationDirectory;
     }
 }

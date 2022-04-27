@@ -6,10 +6,8 @@
  */
 package com.farao_community.farao.gridcapa.export;
 
+import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
-import com.farao_community.farao.gridcapa.task_manager.api.TaskStatusUpdate;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +33,6 @@ public class GridcapaExportService {
 
     private final RestTemplate restTemplate;
     private final FtpClientAdapter ftpClientAdapter;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GridcapaExportService.class);
 
@@ -48,40 +45,36 @@ public class GridcapaExportService {
     }
 
     @Bean
-    public Consumer<Flux<String>> consumeTaskStatusUpdate() {
+    public Consumer<Flux<TaskDto>> consumeTaskDtoUpdate() {
         return f -> f
             .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
-            .map(this::convertEvent)
-            .subscribe(this::transferSuccessfulTasksOutputs);
+            .subscribe(this::exportOutputsForSuccessfulTasks);
     }
 
-    TaskStatusUpdate convertEvent(String eventString) {
-        try {
-            LOGGER.info("event received: {}", eventString);
-            return objectMapper.readValue(eventString, TaskStatusUpdate.class);
-        } catch (JsonProcessingException e) {
-            String errorMessage = String.format("parsing exception occurred while reading TaskStatusUpdate event '%s', event will be ignored", eventString);
-            LOGGER.error(errorMessage);
-            throw new RuntimeException(errorMessage, e);
-        }
-    }
-
-    void transferSuccessfulTasksOutputs(TaskStatusUpdate taskStatusUpdate) {
-        if (taskStatusUpdate.getTaskStatus().equals(TaskStatus.SUCCESS)) {
-            String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskStatusUpdate.getId() + "/outputs-by-id").toUriString();
-            ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(outputsRestLocation, byte[].class);
-            String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
-            String fileNameHeaderIdentifier = "filename=";
-            String zipOutputName = rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length() + 1, rawFileName.length() - 1);
+    void exportOutputsForSuccessfulTasks(TaskDto taskDtoUpdated) {
+        if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS)) {
+            LOGGER.info("task success event received: task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
+            ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDtoUpdated);
+            String zipOutputName = getZipNameFromResponseEntity(responseEntity);
             try {
                 ftpClientAdapter.open();
                 ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
                 ftpClientAdapter.close();
             } catch (IOException e) {
                 LOGGER.error(e.getMessage());
-                throw new RuntimeException("Runtime exception: ", e);
+                throw new RuntimeException("Exception occurred: ", e);
             }
         }
     }
 
+    ResponseEntity<byte[]> getResponseEntity(TaskDto taskDtoUpdated) {
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskDtoUpdated.getTimestamp() + "/outputs").toUriString();
+        return restTemplate.getForEntity(outputsRestLocation, byte[].class);
+    }
+
+    String getZipNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+        String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
+        String fileNameHeaderIdentifier = "filename=";
+        return rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length());
+    }
 }

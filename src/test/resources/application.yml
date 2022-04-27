@@ -9,15 +9,15 @@ spring:
       default:
         group: cse-idcc-outputs
       bindings:
-        consumeTaskStatusUpdate-in-0:
-          destination: cse-idcc-task-status-updated
+        consumeTaskDtoUpdate-in-0:
+          destination: cse-idcc-task-updated
       rabbit:
         default:
           consumer:
             auto-bind-dlq: true
             max-attempts: 1
     function:
-      definition: consumeTaskStatusUpdate
+      definition: consumeTaskDtoUpdate
 
 task-manager:
   base-url: http://localhost:8080
@@ -26,4 +26,4 @@ ftp:
   port: ${FTP_PORT:3030}
   access-key: ${FTP_ACCESS_KEY:user}
   secret-key: ${FTP_SECRET_KEY:password}
-  remote-destination-directory: ${FTP_REMOTE_DESTINATION_DIRECTORY:/data}
+  remote-relative-destination-directory: ${FTP_REMOTE_RELATIVE_DESTINATION_DIRECTORY:cse/idcc/outputs} # value will be appended to absolute ftp working dir
