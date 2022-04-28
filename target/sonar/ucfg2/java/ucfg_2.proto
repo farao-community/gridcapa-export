@@ -1,33 +1,0 @@
-
-P__sonar_lambda_1$com.farao_community.farao.gridcapa.export.GridcapaExportServiceè
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java2 2(F"1*Í
-1è
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java2' 2(-ª
-∏
-è
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java2' 2(-
-%2org.slf4j.Logger"__id*
-""ãà
-è
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java24 2(B
-%3java.lang.String"2java.lang.Throwable#getMessage()Ljava/lang/String;*
-
-tjava.lang.Throwable2getMessage()„‡
-è
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java2' 2(F
-
-%4void"@org.slf4j.Logger#error(Ljava/lang/String;Ljava/lang/Throwable;)V*
-
-%2org.slf4j.Logger*
-
-%3java.lang.String*
-
-tjava.lang.Throwable2.error(Ljava/lang/String;Ljava/lang/Throwable;)"†
-è
-Ñ/home/runner/work/gridcapa-export/gridcapa-export/src/main/java/com/farao_community/farao/gridcapa/export/GridcapaExportService.java2' 2(F
-
-
-%4void:
-tjava.lang.Throwable:
-rjava.lang.ObjectB!
-java.util.function.BiConsumer
