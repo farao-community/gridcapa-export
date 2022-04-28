@@ -15,7 +15,7 @@ public class FtpClientAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
-    private final FTPClient ftp = new FTPClient();
+    private final FTPClient ftp = new FTPClient(); // NOSONAR
 
     public FtpClientAdapter(FtpConfigurationProperties ftpConfigurationProperties) {
         this.ftpConfigurationProperties = ftpConfigurationProperties;
