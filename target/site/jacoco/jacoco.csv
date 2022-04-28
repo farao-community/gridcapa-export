@@ -1,0 +1,6 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+gridcapa-export,com.farao_community.farao.gridcapa.export,GridcapaExportApplication,5,3,0,0,2,1,1,1,1,1
+gridcapa-export,com.farao_community.farao.gridcapa.export,FtpClientAdapter,12,75,2,2,3,19,2,5,0,5
+gridcapa-export,com.farao_community.farao.gridcapa.export,GridcapaExportService,17,113,1,1,3,22,2,8,1,8
+gridcapa-export,com.farao_community.farao.gridcapa.export,FtpConfigurationProperties,0,33,0,0,0,12,0,6,0,6
+gridcapa-export,com.farao_community.farao.gridcapa.export,BeansConfiguration,0,10,0,0,0,2,0,2,0,2
