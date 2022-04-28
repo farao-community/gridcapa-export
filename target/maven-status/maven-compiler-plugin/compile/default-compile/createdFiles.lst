@@ -1,0 +1,5 @@
+com/farao_community/farao/gridcapa/export/GridcapaExportService.class
+com/farao_community/farao/gridcapa/export/FtpClientAdapter.class
+com/farao_community/farao/gridcapa/export/BeansConfiguration.class
+com/farao_community/farao/gridcapa/export/GridcapaExportApplication.class
+com/farao_community/farao/gridcapa/export/FtpConfigurationProperties.class
