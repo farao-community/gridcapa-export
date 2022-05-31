@@ -47,7 +47,7 @@ class GridcapaExportServiceTest {
 
     @Test
     void checkTaskManagerCall() {
-        TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.SUCCESS, new ArrayList<>(), new ArrayList<>());
+        TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.SUCCESS, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/outputs", byte[].class);
