@@ -6,6 +6,8 @@
  */
 package com.farao_community.farao.gridcapa.export;
 
+import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileDto;
+import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
 import org.slf4j.Logger;
@@ -52,7 +54,7 @@ public class GridcapaExportService {
     }
 
     void exportOutputsForSuccessfulTasks(TaskDto taskDtoUpdated) {
-        if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS)) {
+        if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && checkAllOutputFileValidated(taskDtoUpdated)) {
             LOGGER.info("task success event received: task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
             ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDtoUpdated);
             String zipOutputName = getZipNameFromResponseEntity(responseEntity);
@@ -64,6 +66,9 @@ public class GridcapaExportService {
                 LOGGER.error(e.getMessage());
                 throw new RuntimeException("Exception occurred: ", e);
             }
+        }
+        else if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && !checkAllOutputFileValidated(taskDtoUpdated)) {
+            LOGGER.warn("task success event received with missing output files : task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
         }
     }
 
@@ -77,5 +82,15 @@ public class GridcapaExportService {
         // filename coming from response entity header is formatted with double-quotes such as "filename="---real_filename---""
         String fileNameHeaderIdentifier = "filename=";
         return rawFileName.substring(rawFileName.lastIndexOf(fileNameHeaderIdentifier) + fileNameHeaderIdentifier.length() + 1, rawFileName.length() - 1);
+    }
+
+    private boolean checkAllOutputFileValidated(TaskDto taskDtoUpdated) {
+        return taskDtoUpdated
+                .getOutputs()
+                .stream()
+                .reduce(true,
+                        (Boolean acc, ProcessFileDto file) -> acc && file.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED),
+                        Boolean::logicalAnd
+                );
     }
 }
