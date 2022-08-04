@@ -66,8 +66,7 @@ public class GridcapaExportService {
                 LOGGER.error(e.getMessage());
                 throw new RuntimeException("Exception occurred: ", e);
             }
-        }
-        else if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && !checkAllOutputFileValidated(taskDtoUpdated)) {
+        } else if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && !checkAllOutputFileValidated(taskDtoUpdated)) {
             LOGGER.warn("task success event received with missing output files : task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
         }
     }
