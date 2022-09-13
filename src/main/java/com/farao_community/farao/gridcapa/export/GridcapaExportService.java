@@ -6,7 +6,6 @@
  */
 package com.farao_community.farao.gridcapa.export;
 
-import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileDto;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
@@ -54,20 +53,33 @@ public class GridcapaExportService {
     }
 
     void exportOutputsForSuccessfulTasks(TaskDto taskDtoUpdated) {
-        if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && checkAllOutputFileValidated(taskDtoUpdated)) {
-            LOGGER.info("task success event received: task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
-            ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDtoUpdated);
-            String zipOutputName = getZipNameFromResponseEntity(responseEntity);
+        boolean taskSuccessful = taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS);
+        boolean allOutputsAvailable = false;
+        int retryCounter = 0;
+        while (retryCounter < 6 && !allOutputsAvailable) {
             try {
-                ftpClientAdapter.open();
-                ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
-                ftpClientAdapter.close();
-            } catch (IOException e) {
-                LOGGER.error(e.getMessage());
-                throw new RuntimeException("Exception occurred: ", e);
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
             }
-        } else if (taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS) && !checkAllOutputFileValidated(taskDtoUpdated)) {
-            LOGGER.warn("task success event received with missing output files : task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
+            allOutputsAvailable = checkAllOutputFileValidated(taskDtoUpdated);
+            retryCounter++;
+        }
+        if (taskSuccessful) {
+            if (allOutputsAvailable) {
+                LOGGER.info("task success event received: task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
+                ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDtoUpdated);
+                String zipOutputName = getZipNameFromResponseEntity(responseEntity);
+                try {
+                    ftpClientAdapter.open();
+                    ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
+                    ftpClientAdapter.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Exception occurred: ", e);
+                }
+            } else {
+                LOGGER.warn("task success event received with missing output(s) : task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
+            }
         }
     }
 
@@ -84,12 +96,7 @@ public class GridcapaExportService {
     }
 
     private boolean checkAllOutputFileValidated(TaskDto taskDtoUpdated) {
-        return taskDtoUpdated
-                .getOutputs()
-                .stream()
-                .reduce(true,
-                        (Boolean acc, ProcessFileDto file) -> acc && file.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED),
-                        Boolean::logicalAnd
-                );
+        return taskDtoUpdated.getOutputs().stream().allMatch(output -> output.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED));
+
     }
 }
