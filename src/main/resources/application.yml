@@ -1,6 +1,8 @@
 server:
   port: 8080
 spring:
+  application:
+    name: gridcapa-exporter
   rabbitmq:
     host: localhost
     port: 5672
@@ -33,3 +35,8 @@ ftp:
   access-key: gridcapa
   secret-key: gridcapa
   remote-relative-destination-directory: /data/cse/idcc/outputs
+
+logback:
+  amqp:
+    exchange: task-manager-logs-exchange
+    routing-key: "#"

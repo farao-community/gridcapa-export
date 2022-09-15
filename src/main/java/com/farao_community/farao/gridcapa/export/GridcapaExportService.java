@@ -11,6 +11,7 @@ import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.springframework.web.client.RestTemplate;
@@ -34,15 +37,16 @@ public class GridcapaExportService {
 
     private final RestTemplate restTemplate;
     private final FtpClientAdapter ftpClientAdapter;
-
+    private final Logger businessLogger;
     private static final Logger LOGGER = LoggerFactory.getLogger(GridcapaExportService.class);
 
     @Value("${task-manager.base-url}")
     private String taskManagerBaseUrl;
 
-    public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter) {
+    public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, Logger businessLogger) {
         this.restTemplate = restTemplate;
         this.ftpClientAdapter = ftpClientAdapter;
+        this.businessLogger = businessLogger;
     }
 
     @Bean
@@ -52,23 +56,26 @@ public class GridcapaExportService {
             .subscribe(this::exportOutputsForSuccessfulTasks);
     }
 
-    void exportOutputsForSuccessfulTasks(TaskDto taskDtoUpdated) {
-        boolean taskSuccessful = taskDtoUpdated.getStatus().equals(TaskStatus.SUCCESS);
-        boolean allOutputsAvailable = false;
-        int retryCounter = 0;
-        while (retryCounter < 6 && !allOutputsAvailable) {
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
-            }
-            allOutputsAvailable = checkAllOutputFileValidated(taskDtoUpdated);
-            retryCounter++;
-        }
+    void exportOutputsForSuccessfulTasks(TaskDto taskDto) {
+        MDC.put("gridcapa-task-id", taskDto.getId().toString());
+        boolean taskSuccessful = taskDto.getStatus().equals(TaskStatus.SUCCESS);
         if (taskSuccessful) {
+            boolean allOutputsAvailable = false;
+            int retryCounter = 0;
+            while (retryCounter < 6 && !allOutputsAvailable) {
+                try {
+                    TimeUnit.SECONDS.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
+                }
+
+                allOutputsAvailable = checkAllOutputFileValidated(getUpdatedTaskForTimestamp(taskDto.getTimestamp()));
+                retryCounter++;
+            }
             if (allOutputsAvailable) {
-                LOGGER.info("task success event received: task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
-                ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDtoUpdated);
+                businessLogger.info("task success event received, exporting results for: timestamp: {}", taskDto.getTimestamp());
+                ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
                 String zipOutputName = getZipNameFromResponseEntity(responseEntity);
                 try {
                     ftpClientAdapter.open();
@@ -78,13 +85,13 @@ public class GridcapaExportService {
                     throw new RuntimeException("Exception occurred: ", e);
                 }
             } else {
-                LOGGER.warn("task success event received with missing output(s) : task id: {} , timestamp: {}", taskDtoUpdated.getId(), taskDtoUpdated.getTimestamp());
+                businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
             }
         }
     }
 
-    ResponseEntity<byte[]> getResponseEntity(TaskDto taskDtoUpdated) {
-        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + taskDtoUpdated.getTimestamp() + "/outputs").toUriString();
+    ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp + "/outputs").toUriString();
         return restTemplate.getForEntity(outputsRestLocation, byte[].class);
     }
 
@@ -97,6 +104,10 @@ public class GridcapaExportService {
 
     private boolean checkAllOutputFileValidated(TaskDto taskDtoUpdated) {
         return taskDtoUpdated.getOutputs().stream().allMatch(output -> output.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED));
+    }
 
+    private TaskDto getUpdatedTaskForTimestamp(OffsetDateTime timestamp) {
+        String restLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp).toUriString();
+        return restTemplate.getForEntity(restLocation, TaskDto.class).getBody();
     }
 }
