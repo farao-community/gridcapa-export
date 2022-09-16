@@ -64,19 +64,8 @@ public class GridcapaExportService {
         MDC.put("gridcapa-task-id", taskDto.getId().toString());
         boolean taskSuccessful = taskDto.getStatus().equals(TaskStatus.SUCCESS);
         if (taskSuccessful) {
-            boolean allOutputsAvailable = false;
-            int retryCounter = 0;
-            while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
-                try {
-                    TimeUnit.SECONDS.sleep(fetchTaskIntervalInSeconds);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
-                }
-
-                allOutputsAvailable = checkAllOutputFileValidated(getUpdatedTaskForTimestamp(taskDto.getTimestamp()));
-                retryCounter++;
-            }
+            LOGGER.info("Received a successful task event for timestamp: {}, trying to export result if all outputs are available within the configured interval.", taskDto.getTimestamp());
+            boolean allOutputsAvailable = isAllOutputsAvailable(taskDto);
             if (allOutputsAvailable) {
                 businessLogger.info("task success event received, exporting results for: timestamp: {}", taskDto.getTimestamp());
                 ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
@@ -92,6 +81,25 @@ public class GridcapaExportService {
                 businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
             }
         }
+    }
+
+    private boolean isAllOutputsAvailable(TaskDto taskDto) {
+        boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
+        int retryCounter = 0;
+        while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
+            try {
+                TimeUnit.SECONDS.sleep(fetchTaskIntervalInSeconds);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
+            }
+            TaskDto updatedTaskDto = getUpdatedTaskForTimestamp(taskDto.getTimestamp());
+            if (updatedTaskDto != null) {
+                allOutputsAvailable = checkAllOutputFileValidated(updatedTaskDto);
+            }
+            retryCounter++;
+        }
+        return allOutputsAvailable;
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
