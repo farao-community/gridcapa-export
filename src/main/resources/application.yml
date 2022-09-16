@@ -1,6 +1,8 @@
 server:
   port: 8080
 spring:
+  application:
+    name: gridcapa-exporter
   rabbitmq:
     host: localhost
     port: 5672
@@ -27,9 +29,17 @@ spring:
 
 task-manager:
   base-url: http://localhost/cse/idcc/task-manager
+  fetch-task:
+    reties-number: 6
+    interval-in-seconds: 10
 ftp:
   host: localhost
   port: 21
   access-key: gridcapa
   secret-key: gridcapa
   remote-relative-destination-directory: /data/cse/idcc/outputs
+
+logback:
+  amqp:
+    exchange: task-manager-logs-exchange
+    routing-key: "#"

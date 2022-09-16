@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: gridcapa-exporter
   rabbitmq:
     host: rabbitmq
     port: 5672
@@ -21,9 +23,17 @@ spring:
 
 task-manager:
   base-url: http://localhost:8080
+  fetch-task:
+    reties-number: 6
+    interval-in-seconds: 10
 ftp:
   host: ${FTP_HOST:localhost}
   port: ${FTP_PORT:3030}
   access-key: ${FTP_ACCESS_KEY:user}
   secret-key: ${FTP_SECRET_KEY:password}
   remote-relative-destination-directory: ${FTP_REMOTE_RELATIVE_DESTINATION_DIRECTORY:cse/idcc/outputs} # value will be appended to absolute ftp working dir
+
+logback:
+  amqp:
+    exchange: task-manager-logs-exchange
+    routing-key: "#"
