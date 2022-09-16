@@ -42,6 +42,10 @@ public class GridcapaExportService {
 
     @Value("${task-manager.base-url}")
     private String taskManagerBaseUrl;
+    @Value("${task-manager.fetch-task.reties-number}")
+    private int fetchTaskRetriesNumber;
+    @Value("${task-manager.fetch-task.interval-in-seconds}")
+    private int fetchTaskIntervalInSeconds;
 
     public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, Logger businessLogger) {
         this.restTemplate = restTemplate;
@@ -62,9 +66,9 @@ public class GridcapaExportService {
         if (taskSuccessful) {
             boolean allOutputsAvailable = false;
             int retryCounter = 0;
-            while (retryCounter < 6 && !allOutputsAvailable) {
+            while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
                 try {
-                    TimeUnit.SECONDS.sleep(10);
+                    TimeUnit.SECONDS.sleep(fetchTaskIntervalInSeconds);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
@@ -82,7 +86,7 @@ public class GridcapaExportService {
                     ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
                     ftpClientAdapter.close();
                 } catch (IOException e) {
-                    throw new RuntimeException("Exception occurred: ", e);
+                    businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
                 }
             } else {
                 businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());

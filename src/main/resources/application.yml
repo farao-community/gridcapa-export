@@ -29,6 +29,9 @@ spring:
 
 task-manager:
   base-url: http://localhost/cse/idcc/task-manager
+  fetch-task:
+    reties-number: 6
+    interval-in-seconds: 10
 ftp:
   host: localhost
   port: 21
