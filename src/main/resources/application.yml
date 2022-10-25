@@ -38,6 +38,8 @@ ftp:
   access-key: gridcapa
   secret-key: gridcapa
   remote-relative-destination-directory: /data/cse/idcc/outputs
+export:
+  seperate-output-files: false
 
 logback:
   amqp:
