@@ -35,6 +35,7 @@ import reactor.core.publisher.Flux;
 @Service
 public class GridcapaExportService {
 
+    public static final String TASKS_PATH = "/tasks/";
     private final RestTemplate restTemplate;
     private final FtpClientAdapter ftpClientAdapter;
     private final Logger businessLogger;
@@ -116,12 +117,12 @@ public class GridcapaExportService {
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
-        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp + "/outputs").toUriString();
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp + "/outputs").toUriString();
         return restTemplate.getForEntity(outputsRestLocation, byte[].class);
     }
 
     ResponseEntity<byte[]> getResponseEntityByFileType(OffsetDateTime timestamp, String fileType) {
-        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp + "/file/" + fileType).toUriString();
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp + "/file/" + fileType).toUriString();
         return restTemplate.getForEntity(outputsRestLocation, byte[].class);
     }
 
@@ -137,7 +138,7 @@ public class GridcapaExportService {
     }
 
     private TaskDto getUpdatedTaskForTimestamp(OffsetDateTime timestamp) {
-        String restLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp).toUriString();
+        String restLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp).toUriString();
         return restTemplate.getForEntity(restLocation, TaskDto.class).getBody();
     }
 }
