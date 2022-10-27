@@ -87,7 +87,7 @@ public class GridcapaExportService {
     }
 
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
-        String fileOutputName = getZipNameFromResponseEntity(responseEntity);
+        String fileOutputName = getFileNameFromResponseEntity(responseEntity);
         try {
             ftpClientAdapter.open();
             ftpClientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
@@ -126,7 +126,7 @@ public class GridcapaExportService {
         return restTemplate.getForEntity(outputsRestLocation, byte[].class);
     }
 
-    String getZipNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+    String getFileNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
         // filename coming from response entity header is formatted with double-quotes such as "filename="---real_filename---""
         String fileNameHeaderIdentifier = "filename=";

@@ -47,7 +47,7 @@ class GridcapaExportServiceTest {
             header,
             HttpStatus.OK
         );
-        Assertions.assertEquals("out.zip", outputsToFtpService.getZipNameFromResponseEntity(responseEntity));
+        Assertions.assertEquals("out.zip", outputsToFtpService.getFileNameFromResponseEntity(responseEntity));
     }
 
     @Test
