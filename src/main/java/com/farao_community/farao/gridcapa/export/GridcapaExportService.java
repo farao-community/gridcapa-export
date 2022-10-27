@@ -35,6 +35,7 @@ import reactor.core.publisher.Flux;
 @Service
 public class GridcapaExportService {
 
+    public static final String TASKS_PATH = "/tasks/";
     private final RestTemplate restTemplate;
     private final FtpClientAdapter ftpClientAdapter;
     private final Logger businessLogger;
@@ -46,6 +47,8 @@ public class GridcapaExportService {
     private int fetchTaskRetriesNumber;
     @Value("${task-manager.fetch-task.interval-in-seconds}")
     private int fetchTaskIntervalInSeconds;
+    @Value("${export.seperate-output-files:false}")
+    private boolean seperateOutputFiles;
 
     public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, Logger businessLogger) {
         this.restTemplate = restTemplate;
@@ -68,18 +71,29 @@ public class GridcapaExportService {
             boolean allOutputsAvailable = isAllOutputsAvailable(taskDto);
             if (allOutputsAvailable) {
                 businessLogger.info("task success event received, exporting results for: timestamp: {}", taskDto.getTimestamp());
-                ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
-                String zipOutputName = getZipNameFromResponseEntity(responseEntity);
-                try {
-                    ftpClientAdapter.open();
-                    ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
-                    ftpClientAdapter.close();
-                } catch (IOException e) {
-                    businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
+                if (seperateOutputFiles) {
+                    taskDto.getOutputs().stream().forEach(processFileDto -> {
+                        ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
+                        uploadToFtpFromResponseEntity(responseEntity);
+                    });
+                } else {
+                    ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
+                    uploadToFtpFromResponseEntity(responseEntity);
                 }
             } else {
                 businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
             }
+        }
+    }
+
+    private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+        String fileOutputName = getFileNameFromResponseEntity(responseEntity);
+        try {
+            ftpClientAdapter.open();
+            ftpClientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
+            ftpClientAdapter.close();
+        } catch (IOException e) {
+            businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
         }
     }
 
@@ -103,11 +117,16 @@ public class GridcapaExportService {
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
-        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp + "/outputs").toUriString();
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp + "/outputs").toUriString();
         return restTemplate.getForEntity(outputsRestLocation, byte[].class);
     }
 
-    String getZipNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+    ResponseEntity<byte[]> getResponseEntityByFileType(OffsetDateTime timestamp, String fileType) {
+        String outputsRestLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp + "/file/" + fileType).toUriString();
+        return restTemplate.getForEntity(outputsRestLocation, byte[].class);
+    }
+
+    String getFileNameFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String rawFileName = Optional.ofNullable(responseEntity.getHeaders().get("Content-Disposition")).map(at -> at.get(0)).orElse("outputs.zip");
         // filename coming from response entity header is formatted with double-quotes such as "filename="---real_filename---""
         String fileNameHeaderIdentifier = "filename=";
@@ -119,7 +138,7 @@ public class GridcapaExportService {
     }
 
     private TaskDto getUpdatedTaskForTimestamp(OffsetDateTime timestamp) {
-        String restLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + "/tasks/" + timestamp).toUriString();
+        String restLocation = UriComponentsBuilder.fromHttpUrl(taskManagerBaseUrl + TASKS_PATH + timestamp).toUriString();
         return restTemplate.getForEntity(restLocation, TaskDto.class).getBody();
     }
 }
