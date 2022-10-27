@@ -74,11 +74,11 @@ public class GridcapaExportService {
                 if (seperateOutputFiles) {
                     taskDto.getOutputs().stream().forEach(processFileDto -> {
                         ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
-                        uploadZipToFtpFromResponseEntity(responseEntity);
+                        uploadToFtpFromResponseEntity(responseEntity);
                     });
                 } else {
                     ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
-                    uploadZipToFtpFromResponseEntity(responseEntity);
+                    uploadToFtpFromResponseEntity(responseEntity);
                 }
             } else {
                 businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
@@ -86,11 +86,11 @@ public class GridcapaExportService {
         }
     }
 
-    private void uploadZipToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
-        String zipOutputName = getZipNameFromResponseEntity(responseEntity);
+    private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+        String fileOutputName = getZipNameFromResponseEntity(responseEntity);
         try {
             ftpClientAdapter.open();
-            ftpClientAdapter.upload(zipOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
+            ftpClientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
             ftpClientAdapter.close();
         } catch (IOException e) {
             businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
