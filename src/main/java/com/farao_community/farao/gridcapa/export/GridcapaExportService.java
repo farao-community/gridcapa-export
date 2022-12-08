@@ -76,6 +76,8 @@ public class GridcapaExportService {
                         ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
                         uploadToFtpFromResponseEntity(responseEntity);
                     });
+                    ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
+                    uploadToFtpFromResponseEntity(responseEntity);
                 } else {
                     ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
                     uploadToFtpFromResponseEntity(responseEntity);
