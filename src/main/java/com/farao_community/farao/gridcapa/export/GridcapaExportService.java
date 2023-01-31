@@ -60,23 +60,20 @@ public class GridcapaExportService {
     public Consumer<Flux<TaskDto>> consumeTaskDtoUpdate() {
         return f -> f
                 .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
-                .subscribe(this::exportOutputsForSuccessfulTasks);
+                .subscribe(this::exportOutputsForTask);
     }
 
-    void exportOutputsForSuccessfulTasks(TaskDto taskDto) {
+    void exportOutputsForTask(TaskDto taskDto) {
         MDC.put("gridcapa-task-id", taskDto.getId().toString());
         boolean taskWithOutputs = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
         if (taskWithOutputs) {
             LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
-            boolean someOutputsAvailable = isSomeOutputsAvailable(taskDto);
-            if (someOutputsAvailable) {
-                businessLogger.info("Task status {} event received with some output(s), exporting results for timestamp: {}", taskDto.getStatus(), taskDto.getTimestamp());
-                exportValidatedOutputs(taskDto);
-            }
+            fetchOutputsAvailable(taskDto);
+            exportValidatedOutputsAndLog(taskDto);
         }
     }
 
-    private void exportValidatedOutputs(TaskDto taskDto) {
+    private void exportValidatedOutputsAndLog(TaskDto taskDto) {
         if (seperateOutputFiles) {
             taskDto.getOutputs().stream().filter(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED))
                     .forEach(processFileDto -> {
@@ -102,7 +99,7 @@ public class GridcapaExportService {
         }
     }
 
-    private boolean isSomeOutputsAvailable(TaskDto taskDto) {
+    private void fetchOutputsAvailable(TaskDto taskDto) {
         //Sometimes the files are not validated immediately with task status update
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
@@ -118,11 +115,6 @@ public class GridcapaExportService {
                 allOutputsAvailable = checkAllOutputFileValidated(updatedTaskDto);
             }
             retryCounter++;
-        }
-        if (allOutputsAvailable) {
-            return true;
-        } else {
-            return taskDto.getOutputs().stream().anyMatch(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED));
         }
     }
 

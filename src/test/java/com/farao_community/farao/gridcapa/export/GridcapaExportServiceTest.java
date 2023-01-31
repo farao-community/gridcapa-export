@@ -56,7 +56,7 @@ class GridcapaExportServiceTest {
         TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.SUCCESS, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 2), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
+        outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/outputs", byte[].class);
     }
 
@@ -66,7 +66,7 @@ class GridcapaExportServiceTest {
         TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.SUCCESS, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 1), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
+        outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(restTemplate, Mockito.times(1)).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
     }
 
@@ -76,7 +76,17 @@ class GridcapaExportServiceTest {
         TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.ERROR, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 1), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
+        outputsToFtpService.exportOutputsForTask(taskDto);
+        Mockito.verify(restTemplate, Mockito.times(1)).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
+    }
+
+    @Test
+    void checkTaskManagerCallWithLogFileForErrorTask() {
+        ReflectionTestUtils.setField(outputsToFtpService, "seperateOutputFiles", false);
+        TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.ERROR, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 0), new ArrayList<>());
+        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
+        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
+        outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(restTemplate, Mockito.times(1)).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
     }
 
@@ -85,7 +95,7 @@ class GridcapaExportServiceTest {
         TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.ERROR, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 0), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
+        outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(restTemplate, Mockito.never()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
     }
 
@@ -98,7 +108,7 @@ class GridcapaExportServiceTest {
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA2", byte[].class)).thenReturn(ResponseEntity.ok("test3".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class)).thenReturn(ResponseEntity.ok("rao-logs.zip".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
+        outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA0", byte[].class);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA1", byte[].class);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA2", byte[].class);
@@ -111,20 +121,16 @@ class GridcapaExportServiceTest {
     }
 
     @Test
-    void checkTaskManagerCallForSeperateZipFilesForInterruptedTask() {
+    void checkTaskManagerCallForLogsForErrorTask() {
         ReflectionTestUtils.setField(outputsToFtpService, "seperateOutputFiles", true);
-        TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.INTERRUPTED, new ArrayList<>(), new ArrayList<>(), createProcessFileList(3, 1), new ArrayList<>());
-        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA0", byte[].class)).thenReturn(ResponseEntity.ok("test1".getBytes(StandardCharsets.UTF_8)));
-        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA1", byte[].class)).thenReturn(ResponseEntity.ok("test2".getBytes(StandardCharsets.UTF_8)));
-        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA2", byte[].class)).thenReturn(ResponseEntity.ok("test3".getBytes(StandardCharsets.UTF_8)));
+        TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.ERROR, new ArrayList<>(), new ArrayList<>(), createProcessFileList(3, 0), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class)).thenReturn(ResponseEntity.ok("rao-logs.zip".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
-        outputsToFtpService.exportOutputsForSuccessfulTasks(taskDto);
-        Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA0", byte[].class);
-        Mockito.verify(restTemplate, Mockito.never()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA1", byte[].class);
+        outputsToFtpService.exportOutputsForTask(taskDto);
+        Mockito.verify(restTemplate, Mockito.never()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA0", byte[].class);
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class);
         try {
-            Mockito.verify(ftpClientAdapter, Mockito.times(2)).upload(Mockito.anyString(), Mockito.any());
+            Mockito.verify(ftpClientAdapter, Mockito.times(1)).upload(Mockito.anyString(), Mockito.any());
         } catch (IOException e) {
             Assertions.fail("checkTaskManagerCallForSeperateZipFiles : ftpClientAdapter should not throw IOException!");
         }
