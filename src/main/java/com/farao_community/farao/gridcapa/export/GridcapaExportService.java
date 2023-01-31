@@ -59,32 +59,35 @@ public class GridcapaExportService {
     @Bean
     public Consumer<Flux<TaskDto>> consumeTaskDtoUpdate() {
         return f -> f
-            .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
-            .subscribe(this::exportOutputsForSuccessfulTasks);
+                .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
+                .subscribe(this::exportOutputsForSuccessfulTasks);
     }
 
     void exportOutputsForSuccessfulTasks(TaskDto taskDto) {
         MDC.put("gridcapa-task-id", taskDto.getId().toString());
-        boolean taskSuccessful = taskDto.getStatus().equals(TaskStatus.SUCCESS);
-        if (taskSuccessful) {
-            LOGGER.info("Received a successful task event for timestamp: {}, trying to export result if all outputs are available within the configured interval.", taskDto.getTimestamp());
-            boolean allOutputsAvailable = isAllOutputsAvailable(taskDto);
-            if (allOutputsAvailable) {
-                businessLogger.info("task success event received, exporting results for: timestamp: {}", taskDto.getTimestamp());
-                if (seperateOutputFiles) {
-                    taskDto.getOutputs().stream().forEach(processFileDto -> {
+        boolean taskWithOutputs = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
+        if (taskWithOutputs) {
+            LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
+            boolean someOutputsAvailable = isSomeOutputsAvailable(taskDto);
+            if (someOutputsAvailable) {
+                businessLogger.info("Task status {} event received with some output(s), exporting results for timestamp: {}", taskDto.getStatus(), taskDto.getTimestamp());
+                exportValidatedOutputs(taskDto);
+            }
+        }
+    }
+
+    private void exportValidatedOutputs(TaskDto taskDto) {
+        if (seperateOutputFiles) {
+            taskDto.getOutputs().stream().filter(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED))
+                    .forEach(processFileDto -> {
                         ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
                         uploadToFtpFromResponseEntity(responseEntity);
                     });
-                    ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
-                    uploadToFtpFromResponseEntity(responseEntity);
-                } else {
-                    ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
-                    uploadToFtpFromResponseEntity(responseEntity);
-                }
-            } else {
-                businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
-            }
+            ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
+            uploadToFtpFromResponseEntity(responseEntity);
+        } else {
+            ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
+            uploadToFtpFromResponseEntity(responseEntity);
         }
     }
 
@@ -99,7 +102,8 @@ public class GridcapaExportService {
         }
     }
 
-    private boolean isAllOutputsAvailable(TaskDto taskDto) {
+    private boolean isSomeOutputsAvailable(TaskDto taskDto) {
+        //Sometimes the files are not validated immediately with task status update
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
         while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
@@ -115,7 +119,11 @@ public class GridcapaExportService {
             }
             retryCounter++;
         }
-        return allOutputsAvailable;
+        if (allOutputsAvailable) {
+            return true;
+        } else {
+            return taskDto.getOutputs().stream().anyMatch(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED));
+        }
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
