@@ -74,6 +74,7 @@ public class GridcapaExportService {
     }
 
     private void exportValidatedOutputsAndLog(TaskDto taskDto) {
+        businessLogger.info("Task status {}, exporting results for timestamp: {}", taskDto.getStatus(), taskDto.getTimestamp());
         if (seperateOutputFiles) {
             taskDto.getOutputs().stream().filter(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED))
                     .forEach(processFileDto -> {

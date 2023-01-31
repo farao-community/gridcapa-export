@@ -92,11 +92,12 @@ class GridcapaExportServiceTest {
 
     @Test
     void checkTaskManagerCallWithMissingFileForErrorTaskWithoutOutputs() {
+        ReflectionTestUtils.setField(outputsToFtpService, "seperateOutputFiles", false);
         TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.ERROR, new ArrayList<>(), new ArrayList<>(), createProcessFileList(2, 0), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class)).thenReturn(ResponseEntity.ok("test".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
         outputsToFtpService.exportOutputsForTask(taskDto);
-        Mockito.verify(restTemplate, Mockito.never()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
+        Mockito.verify(restTemplate, Mockito.times(1)).getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/outputs", byte[].class);
     }
 
     @Test
