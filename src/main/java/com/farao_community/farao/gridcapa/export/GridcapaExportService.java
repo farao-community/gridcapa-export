@@ -65,8 +65,8 @@ public class GridcapaExportService {
 
     void exportOutputsForTask(TaskDto taskDto) {
         MDC.put("gridcapa-task-id", taskDto.getId().toString());
-        boolean taskWithOutputs = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
-        if (taskWithOutputs) {
+        boolean isTaskFinished = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
+        if (isTaskFinished) {
             LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
             fetchOutputsAvailable(taskDto);
             exportValidatedOutputsAndLog(taskDto);
@@ -100,8 +100,10 @@ public class GridcapaExportService {
         }
     }
 
+    /**
+     * Sometimes the files are not validated immediately with task status update, we retry to fetch task
+     */
     private void fetchOutputsAvailable(TaskDto taskDto) {
-        //Sometimes the files are not validated immediately with task status update
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
         while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
