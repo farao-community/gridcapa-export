@@ -2,7 +2,7 @@ spring:
   application:
     name: gridcapa-exporter
   rabbitmq:
-    host: rabbitmq
+    host: localhost
     port: 5672
     username: gridcapa
     password: gridcapa

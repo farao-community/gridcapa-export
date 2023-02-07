@@ -59,32 +59,33 @@ public class GridcapaExportService {
     @Bean
     public Consumer<Flux<TaskDto>> consumeTaskDtoUpdate() {
         return f -> f
-            .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
-            .subscribe(this::exportOutputsForSuccessfulTasks);
+                .onErrorContinue((t, r) -> LOGGER.error(t.getMessage(), t))
+                .subscribe(this::exportOutputsForTask);
     }
 
-    void exportOutputsForSuccessfulTasks(TaskDto taskDto) {
+    void exportOutputsForTask(TaskDto taskDto) {
         MDC.put("gridcapa-task-id", taskDto.getId().toString());
-        boolean taskSuccessful = taskDto.getStatus().equals(TaskStatus.SUCCESS);
-        if (taskSuccessful) {
-            LOGGER.info("Received a successful task event for timestamp: {}, trying to export result if all outputs are available within the configured interval.", taskDto.getTimestamp());
-            boolean allOutputsAvailable = isAllOutputsAvailable(taskDto);
-            if (allOutputsAvailable) {
-                businessLogger.info("task success event received, exporting results for: timestamp: {}", taskDto.getTimestamp());
-                if (seperateOutputFiles) {
-                    taskDto.getOutputs().stream().forEach(processFileDto -> {
+        boolean isTaskFinished = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
+        if (isTaskFinished) {
+            LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
+            fetchOutputsAvailable(taskDto);
+            exportValidatedOutputsAndLog(taskDto);
+        }
+    }
+
+    private void exportValidatedOutputsAndLog(TaskDto taskDto) {
+        businessLogger.info("Task status {}, exporting results for timestamp: {}", taskDto.getStatus(), taskDto.getTimestamp());
+        if (seperateOutputFiles) {
+            taskDto.getOutputs().stream().filter(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED))
+                    .forEach(processFileDto -> {
                         ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
                         uploadToFtpFromResponseEntity(responseEntity);
                     });
-                    ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
-                    uploadToFtpFromResponseEntity(responseEntity);
-                } else {
-                    ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
-                    uploadToFtpFromResponseEntity(responseEntity);
-                }
-            } else {
-                businessLogger.warn("Task success event received with missing output(s) for timestamp: {}. Results will not be exported.", taskDto.getTimestamp());
-            }
+            ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
+            uploadToFtpFromResponseEntity(responseEntity);
+        } else {
+            ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
+            uploadToFtpFromResponseEntity(responseEntity);
         }
     }
 
@@ -99,7 +100,10 @@ public class GridcapaExportService {
         }
     }
 
-    private boolean isAllOutputsAvailable(TaskDto taskDto) {
+    /**
+     * Sometimes the files are not validated immediately with task status update, we retry to fetch task
+     */
+    private void fetchOutputsAvailable(TaskDto taskDto) {
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
         while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
@@ -115,7 +119,6 @@ public class GridcapaExportService {
             }
             retryCounter++;
         }
-        return allOutputsAvailable;
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
