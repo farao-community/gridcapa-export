@@ -140,7 +140,7 @@ class GridcapaExportServiceTest {
     private List<ProcessFileDto> createProcessFileList(int total, int nbValidated) {
         List<ProcessFileDto> result = new ArrayList<>();
         for (int i = 0; i < total; i++) {
-            ProcessFileDto file = new ProcessFileDto("/Path" + i, "fileType",
+            ProcessFileDto file = new ProcessFileDto("/AA" + i, "/AA" + i,
                     (i < nbValidated) ? ProcessFileStatus.VALIDATED : ProcessFileStatus.NOT_PRESENT,
                     "aa" + i, OffsetDateTime.now());
             result.add(file);
