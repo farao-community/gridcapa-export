@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2022, RTE (http://www.rte-france.com)
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.farao_community.farao.gridcapa.export;
+package com.farao_community.farao.gridcapa.export.service;
 
+import com.farao_community.farao.gridcapa.export.adapter.ClientAdapter;
+import com.farao_community.farao.gridcapa.export.adapter.FtpClientAdapter;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
@@ -16,28 +18,27 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
-
 /**
  * @author Mohamed Benrejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
+ * @author Oualid Aloui {@literal <oualid.aloui at rte-france.com>}
  */
 @Service
 public class GridcapaExportService {
 
     public static final String TASKS_PATH = "/tasks/";
     private final RestTemplate restTemplate;
-    private final FtpClientAdapter ftpClientAdapter;
+    private final ClientAdapter clientAdapter;
     private final Logger businessLogger;
     private static final Logger LOGGER = LoggerFactory.getLogger(GridcapaExportService.class);
 
@@ -50,9 +51,9 @@ public class GridcapaExportService {
     @Value("${export.seperate-output-files:false}")
     private boolean seperateOutputFiles;
 
-    public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, Logger businessLogger) {
+    public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, ClientAdapter clientAdapter, Logger businessLogger) {
         this.restTemplate = restTemplate;
-        this.ftpClientAdapter = ftpClientAdapter;
+        this.clientAdapter = clientAdapter;
         this.businessLogger = businessLogger;
     }
 
@@ -92,10 +93,10 @@ public class GridcapaExportService {
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String fileOutputName = getFileNameFromResponseEntity(responseEntity);
         try {
-            ftpClientAdapter.open();
-            ftpClientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
-            ftpClientAdapter.close();
-        } catch (IOException e) {
+            clientAdapter.open();
+            clientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
+            clientAdapter.close();
+        } catch (Exception e) {
             businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
         }
     }

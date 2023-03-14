@@ -1,6 +1,15 @@
-package com.farao_community.farao.gridcapa.export;
+/*
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package com.farao_community.farao.gridcapa.export.adapter;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -12,6 +21,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
+/**
+ * @author Mohamed Benrejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
+ */
 
 @SpringBootTest
 class FtpClientAdapterTest {
@@ -41,8 +54,7 @@ class FtpClientAdapterTest {
     }
 
     @Test
-    void checkFileTransferredToRemoteDestination()
-        throws IOException {
+    void checkFileTransferredToRemoteDestination() throws IOException {
         ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
         Assertions.assertTrue(fakeFtpServer.getFileSystem().exists("/data/test.txt"));
     }
