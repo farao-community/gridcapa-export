@@ -8,6 +8,7 @@ package com.farao_community.farao.gridcapa.export.service;
 
 import com.farao_community.farao.gridcapa.export.adapter.ClientAdapter;
 import com.farao_community.farao.gridcapa.export.adapter.FtpClientAdapter;
+import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
@@ -93,11 +94,9 @@ public class GridcapaExportService {
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String fileOutputName = getFileNameFromResponseEntity(responseEntity);
         try {
-            clientAdapter.open();
             clientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
-            clientAdapter.close();
-        } catch (Exception e) {
-            businessLogger.error("exception occurred while uploading generated results to ftp server, details: {}", e.getMessage());
+        } catch (ClientAdapterException e) {
+            businessLogger.error("exception occurred while uploading generated results to server, details: {}", e.getMessage());
         }
     }
 

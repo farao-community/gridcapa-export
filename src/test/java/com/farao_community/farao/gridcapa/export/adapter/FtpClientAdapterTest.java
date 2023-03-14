@@ -6,6 +6,7 @@
  */
 package com.farao_community.farao.gridcapa.export.adapter;
 
+import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -35,7 +35,7 @@ class FtpClientAdapterTest {
     private FtpClientAdapter ftpClientAdapter;
 
     @BeforeEach
-    public void setup() throws IOException {
+    public void setup() throws ClientAdapterException {
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.addUserAccount(new UserAccount("user", "password", "/data"));
 
@@ -44,17 +44,15 @@ class FtpClientAdapterTest {
         fakeFtpServer.setFileSystem(fileSystem);
         fakeFtpServer.setServerControlPort(3030);
         fakeFtpServer.start();
-        ftpClientAdapter.open();
     }
 
     @AfterEach
-    public void teardown() throws IOException {
-        ftpClientAdapter.close();
+    public void teardown() {
         fakeFtpServer.stop();
     }
 
     @Test
-    void checkFileTransferredToRemoteDestination() throws IOException {
+    void checkFileTransferredToRemoteDestination() throws ClientAdapterException {
         ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
         Assertions.assertTrue(fakeFtpServer.getFileSystem().exists("/data/test.txt"));
     }

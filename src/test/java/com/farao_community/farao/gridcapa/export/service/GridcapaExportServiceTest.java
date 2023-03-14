@@ -7,6 +7,7 @@
 package com.farao_community.farao.gridcapa.export.service;
 
 import com.farao_community.farao.gridcapa.export.adapter.FtpClientAdapter;
+import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileDto;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
@@ -24,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -127,7 +127,7 @@ class GridcapaExportServiceTest {
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class);
         try {
             Mockito.verify(ftpClientAdapter, Mockito.times(4)).upload(Mockito.anyString(), Mockito.any());
-        } catch (IOException e) {
+        } catch (ClientAdapterException e) {
             Assertions.fail("checkTaskManagerCallForSeperateZipFiles : ftpClientAdapter should not throw IOException!");
         }
     }
@@ -143,7 +143,7 @@ class GridcapaExportServiceTest {
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class);
         try {
             Mockito.verify(ftpClientAdapter, Mockito.times(1)).upload(Mockito.anyString(), Mockito.any());
-        } catch (IOException e) {
+        } catch (ClientAdapterException e) {
             Assertions.fail("checkTaskManagerCallForSeperateZipFiles : ftpClientAdapter should not throw IOException!");
         }
     }

@@ -4,18 +4,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.farao_community.farao.gridcapa.export.adapter;
-
-import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
-
-import java.io.InputStream;
+package com.farao_community.farao.gridcapa.export.exception;
 
 /**
  * @author Oualid Aloui {@literal <oualid.aloui at rte-france.com>}
  */
 
-public interface ClientAdapter {
+public class ClientAdapterException extends Exception {
 
-    void upload(String fileName, InputStream inputStream) throws ClientAdapterException;
-
+    public ClientAdapterException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -6,8 +6,8 @@
  */
 package com.farao_community.farao.gridcapa.export;
 
-import com.farao_community.farao.gridcapa.export.configProperties.FtpConfigurationProperties;
-import com.farao_community.farao.gridcapa.export.configProperties.SftpConfigurationProperties;
+import com.farao_community.farao.gridcapa.export.config_properties.FtpConfigurationProperties;
+import com.farao_community.farao.gridcapa.export.config_properties.SftpConfigurationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
