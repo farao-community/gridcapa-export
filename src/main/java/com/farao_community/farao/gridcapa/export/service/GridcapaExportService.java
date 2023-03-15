@@ -7,7 +7,6 @@
 package com.farao_community.farao.gridcapa.export.service;
 
 import com.farao_community.farao.gridcapa.export.adapter.ClientAdapter;
-import com.farao_community.farao.gridcapa.export.adapter.FtpClientAdapter;
 import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
@@ -52,7 +51,7 @@ public class GridcapaExportService {
     @Value("${export.seperate-output-files:false}")
     private boolean seperateOutputFiles;
 
-    public GridcapaExportService(RestTemplate restTemplate, FtpClientAdapter ftpClientAdapter, ClientAdapter clientAdapter, Logger businessLogger) {
+    public GridcapaExportService(RestTemplate restTemplate, ClientAdapter clientAdapter, Logger businessLogger) {
         this.restTemplate = restTemplate;
         this.clientAdapter = clientAdapter;
         this.businessLogger = businessLogger;
