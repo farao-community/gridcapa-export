@@ -32,12 +32,23 @@ task-manager:
   fetch-task:
     reties-number: 6
     interval-in-seconds: 10
+
 ftp:
+  active: ${FTP_ACTIVE:false}
   host: localhost
   port: 21
   access-key: gridcapa
   secret-key: gridcapa
   remote-relative-destination-directory: /data/cse/idcc/outputs
+
+sftp:
+  active: ${SFTP_ACTIVE:false}
+  host: localhost
+  port: 22
+  access-key: gridcapa
+  secret-key: gridcapa
+  remote-relative-destination-directory: /data/cse/idcc/outputs
+
 export:
   seperate-output-files: false
 

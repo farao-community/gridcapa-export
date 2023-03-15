@@ -1,5 +1,13 @@
-package com.farao_community.farao.gridcapa.export;
+/*
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package com.farao_community.farao.gridcapa.export.service;
 
+import com.farao_community.farao.gridcapa.export.adapter.FtpClientAdapter;
+import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileDto;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
@@ -17,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -25,11 +32,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * @author Mohamed Benrejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
+ */
+
 @SpringBootTest
 class GridcapaExportServiceTest {
-
-    @Autowired
-    private GridcapaExportService outputsToFtpService;
 
     @MockBean
     FtpClientAdapter ftpClientAdapter;
@@ -37,15 +45,18 @@ class GridcapaExportServiceTest {
     @MockBean
     private RestTemplate restTemplate;
 
+    @Autowired
+    private GridcapaExportService outputsToFtpService;
+
     @Test
     void checkFileNameRetrievedCorrectlyFromHeader() {
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.APPLICATION_JSON);
         header.put("Content-Disposition", List.of("filename=\"out.zip\""));
         ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(
-            "test-body".getBytes(StandardCharsets.UTF_8),
-            header,
-            HttpStatus.OK
+                "test-body".getBytes(StandardCharsets.UTF_8),
+                header,
+                HttpStatus.OK
         );
         Assertions.assertEquals("out.zip", outputsToFtpService.getFileNameFromResponseEntity(responseEntity));
     }
@@ -116,7 +127,7 @@ class GridcapaExportServiceTest {
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class);
         try {
             Mockito.verify(ftpClientAdapter, Mockito.times(4)).upload(Mockito.anyString(), Mockito.any());
-        } catch (IOException e) {
+        } catch (ClientAdapterException e) {
             Assertions.fail("checkTaskManagerCallForSeperateZipFiles : ftpClientAdapter should not throw IOException!");
         }
     }
@@ -132,7 +143,7 @@ class GridcapaExportServiceTest {
         Mockito.verify(restTemplate, Mockito.atLeastOnce()).getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/LOGS", byte[].class);
         try {
             Mockito.verify(ftpClientAdapter, Mockito.times(1)).upload(Mockito.anyString(), Mockito.any());
-        } catch (IOException e) {
+        } catch (ClientAdapterException e) {
             Assertions.fail("checkTaskManagerCallForSeperateZipFiles : ftpClientAdapter should not throw IOException!");
         }
     }
