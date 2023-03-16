@@ -49,7 +49,7 @@ public class SftpClientAdapter implements ClientAdapter {
             channelSftp.connect();
             LOGGER.info("Connection established");
             LOGGER.info("Attempt to copy {} file to SFTP server", fileName);
-            channelSftp.put(inputStream, sftpConfigurationProperties.getRemoteRelativeDestinationDirectory() + fileName);
+            channelSftp.put(inputStream, sftpConfigurationProperties.getRemoteRelativeDestinationDirectory() + "/" + fileName);
             LOGGER.info("File {} copied successfully to SFTP server", fileName);
 
             channelSftp.disconnect();
