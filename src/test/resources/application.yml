@@ -26,7 +26,9 @@ task-manager:
   fetch-task:
     reties-number: 6
     interval-in-seconds: 10
+
 ftp:
+  active: ${FTP_ACTIVE:true}
   host: ${FTP_HOST:localhost}
   port: ${FTP_PORT:3030}
   access-key: ${FTP_ACCESS_KEY:user}
