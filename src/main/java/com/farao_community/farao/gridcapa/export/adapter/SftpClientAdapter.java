@@ -41,6 +41,7 @@ public class SftpClientAdapter implements ClientAdapter {
             JSch jsch = new JSch();
             Session jschSession = jsch.getSession(sftpConfigurationProperties.getAccessKey(), sftpConfigurationProperties.getHost(), sftpConfigurationProperties.getPort());
             jschSession.setPassword(sftpConfigurationProperties.getSecretKey());
+            jschSession.setConfig("StrictHostKeyChecking", "no");
             jschSession.connect();
 
             ChannelSftp channelSftp = (ChannelSftp) jschSession.openChannel("sftp");
