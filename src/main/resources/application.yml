@@ -34,7 +34,7 @@ task-manager:
     interval-in-seconds: 10
 
 ftp:
-  active: ${FTP_ACTIVE:false}
+  active: ${FTP_ACTIVE:true}
   host: localhost
   port: 21
   access-key: gridcapa
