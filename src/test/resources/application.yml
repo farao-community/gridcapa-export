@@ -25,10 +25,10 @@ task-manager:
   base-url: http://localhost:8080
   fetch-task:
     reties-number: 6
-    interval-in-seconds: 10
+    interval-in-seconds: 2
 
 ftp:
-  active: ${FTP_ACTIVE:false}
+  active: ${FTP_ACTIVE:true}
   host: ${FTP_HOST:localhost}
   port: ${FTP_PORT:3030}
   access-key: ${FTP_ACCESS_KEY:user}
