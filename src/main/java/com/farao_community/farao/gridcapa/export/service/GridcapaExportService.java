@@ -105,7 +105,7 @@ public class GridcapaExportService {
     private void fetchOutputsAvailable(TaskDto taskDto) {
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
-        while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable) {
+        do {
             try {
                 TimeUnit.SECONDS.sleep(fetchTaskIntervalInSeconds);
             } catch (InterruptedException e) {
@@ -117,7 +117,7 @@ public class GridcapaExportService {
                 allOutputsAvailable = checkAllOutputFileValidated(updatedTaskDto);
             }
             retryCounter++;
-        }
+        } while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable);
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
