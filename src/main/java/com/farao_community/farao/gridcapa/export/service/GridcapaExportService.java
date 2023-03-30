@@ -69,8 +69,8 @@ public class GridcapaExportService {
         boolean isTaskFinished = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
         if (isTaskFinished) {
             LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
-            fetchOutputsAvailable(taskDto);
-            exportValidatedOutputsAndLog(taskDto);
+            TaskDto taskDtoUpdated = fetchOutputsAvailable(taskDto);
+            exportValidatedOutputsAndLog(taskDtoUpdated);
         }
     }
 
@@ -102,7 +102,8 @@ public class GridcapaExportService {
     /**
      * Sometimes the files are not validated immediately with task status update, we retry to fetch task
      */
-    private void fetchOutputsAvailable(TaskDto taskDto) {
+    private TaskDto fetchOutputsAvailable(TaskDto taskDto) {
+        TaskDto updatedTaskDto;
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
         do {
@@ -112,12 +113,13 @@ public class GridcapaExportService {
                 Thread.currentThread().interrupt();
                 LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
             }
-            TaskDto updatedTaskDto = getUpdatedTaskForTimestamp(taskDto.getTimestamp());
+            updatedTaskDto = getUpdatedTaskForTimestamp(taskDto.getTimestamp());
             if (updatedTaskDto != null) {
                 allOutputsAvailable = checkAllOutputFileValidated(updatedTaskDto);
             }
             retryCounter++;
         } while (retryCounter < fetchTaskRetriesNumber && !allOutputsAvailable);
+        return updatedTaskDto != null ? updatedTaskDto : taskDto;
     }
 
     ResponseEntity<byte[]> getResponseEntity(OffsetDateTime timestamp) {
