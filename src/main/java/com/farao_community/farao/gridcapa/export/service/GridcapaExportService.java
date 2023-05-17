@@ -65,12 +65,17 @@ public class GridcapaExportService {
     }
 
     void exportOutputsForTask(TaskDto taskDto) {
-        MDC.put("gridcapa-task-id", taskDto.getId().toString());
-        boolean isTaskFinished = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
-        if (isTaskFinished) {
-            LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
-            TaskDto taskDtoUpdated = fetchOutputsAvailable(taskDto);
-            exportValidatedOutputsAndLog(taskDtoUpdated);
+        try {
+            MDC.put("gridcapa-task-id", taskDto.getId().toString());
+            boolean isTaskFinished = taskDto.getStatus().equals(TaskStatus.SUCCESS) || taskDto.getStatus().equals(TaskStatus.ERROR);
+            if (isTaskFinished) {
+                LOGGER.info("Received a task status {} event for timestamp: {}, trying to export result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
+                TaskDto taskDtoUpdated = fetchOutputsAvailable(taskDto);
+                exportValidatedOutputsAndLog(taskDtoUpdated);
+            }
+        } catch (Exception e) {
+            //this exeption block avoids gridcapa export from deconnecting from spring cloud stream !
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
