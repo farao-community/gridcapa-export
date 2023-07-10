@@ -43,9 +43,12 @@ public class FtpClientAdapter implements ClientAdapter {
             performedRetries++;
             successfulFtpSend = performSingleUploadAttempt(fileName, inputStream);
         }
+        if (!successfulFtpSend) {
+            throw new ClientAdapterException(String.format("Upload failed after %s retires", maxRetryCount));
+        }
     }
 
-    private boolean performSingleUploadAttempt(String fileName, InputStream inputStream) throws ClientAdapterException {
+    private boolean performSingleUploadAttempt(String fileName, InputStream inputStream) {
         boolean successFlag = false;
         try {
             FTPClient ftp = new FTPClient(); // NOSONAR
@@ -76,7 +79,7 @@ public class FtpClientAdapter implements ClientAdapter {
             LOGGER.info("Connection closed");
             return successFlag;
         } catch (IOException e) {
-            LOGGER.error("Fail during upload");
+            LOGGER.error("Fail during upload", e);
             return successFlag;
         }
     }

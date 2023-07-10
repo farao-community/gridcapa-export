@@ -15,4 +15,8 @@ public class ClientAdapterException extends Exception {
     public ClientAdapterException(Throwable cause) {
         super(cause);
     }
+
+    public ClientAdapterException(String message) {
+        super(message);
+    }
 }
