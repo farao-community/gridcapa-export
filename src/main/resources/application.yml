@@ -40,6 +40,7 @@ ftp:
   access-key: gridcapa
   secret-key: gridcapa
   remote-relative-destination-directory: /data/cse/idcc/outputs
+  retry-count: 3
 
 sftp:
   active: ${SFTP_ACTIVE:false}
