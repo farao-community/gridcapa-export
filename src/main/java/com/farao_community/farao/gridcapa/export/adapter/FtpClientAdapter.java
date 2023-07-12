@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mohamed BenRejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
@@ -28,6 +29,7 @@ import java.io.InputStream;
 @ConditionalOnProperty(prefix = "ftp", name = "active", havingValue = "true")
 public class FtpClientAdapter implements ClientAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
+    public static final long SLEEP_CONSTANT = 5L;
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
 
@@ -40,6 +42,12 @@ public class FtpClientAdapter implements ClientAdapter {
         final int maxRetryCount = ftpConfigurationProperties.getRetryCount();
         boolean successfulFtpSend = false;
         while (performedRetries < maxRetryCount && !successfulFtpSend) {
+            try {
+                //first attempt won't sleep, then will sleep 5s and then 10s
+                TimeUnit.SECONDS.sleep(performedRetries * SLEEP_CONSTANT);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
             performedRetries++;
             successfulFtpSend = performSingleUploadAttempt(fileName, inputStream);
         }
