@@ -50,6 +50,6 @@ class FtpClientAdapterTest {
 
     @Test
     void checkFileTransferredToRemoteDestinationKo() throws ClientAdapterException {
-        Assertions.assertThrows(ClientAdapterException.class, () ->ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8))));
+        Assertions.assertThrows(ClientAdapterException.class, () -> ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8))));
     }
 }
