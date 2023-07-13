@@ -34,26 +34,22 @@ class FtpClientAdapterTest {
     @Autowired
     private FtpClientAdapter ftpClientAdapter;
 
-    @BeforeEach
-    public void setup() throws ClientAdapterException {
+    @Test
+    void checkFileTransferredToRemoteDestination() throws ClientAdapterException {
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.addUserAccount(new UserAccount("user", "password", "/data"));
-
         FileSystem fileSystem = new UnixFakeFileSystem();
         fileSystem.add(new DirectoryEntry("/data"));
         fakeFtpServer.setFileSystem(fileSystem);
         fakeFtpServer.setServerControlPort(3030);
         fakeFtpServer.start();
-    }
-
-    @AfterEach
-    public void teardown() {
+        ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
+        Assertions.assertTrue(fakeFtpServer.getFileSystem().exists("/data/test.txt"));
         fakeFtpServer.stop();
     }
 
     @Test
-    void checkFileTransferredToRemoteDestination() throws ClientAdapterException {
-        ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
-        Assertions.assertTrue(fakeFtpServer.getFileSystem().exists("/data/test.txt"));
+    void checkFileTransferredToRemoteDestinationKo() throws ClientAdapterException {
+        Assertions.assertThrows(ClientAdapterException.class, () ->ftpClientAdapter.upload("test.txt", new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8))));
     }
 }
