@@ -35,6 +35,7 @@ ftp:
   secret-key: ${FTP_SECRET_KEY:password}
   remote-relative-destination-directory: ${FTP_REMOTE_RELATIVE_DESTINATION_DIRECTORY:cse/idcc/outputs} # value will be appended to absolute ftp working dir
   retry-count: 3
+  retry-sleep: 5
 
 logback:
   amqp:

@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(prefix = "ftp", name = "active", havingValue = "true")
 public class FtpClientAdapter implements ClientAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
-    public static final long SLEEP_CONSTANT = 5L;
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
 
@@ -40,11 +39,11 @@ public class FtpClientAdapter implements ClientAdapter {
     public void upload(String fileName, InputStream inputStream) throws ClientAdapterException {
         int performedRetries = 0;
         final int maxRetryCount = ftpConfigurationProperties.getRetryCount();
+        final int retrySleep = ftpConfigurationProperties.getRetrySleep();
         boolean successfulFtpSend = false;
         while (performedRetries < maxRetryCount && !successfulFtpSend) {
             try {
-                //first attempt won't sleep, then will sleep 5s and then 10s
-                TimeUnit.SECONDS.sleep(performedRetries * SLEEP_CONSTANT);
+                TimeUnit.SECONDS.sleep((long) performedRetries * retrySleep);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
@@ -52,7 +51,7 @@ public class FtpClientAdapter implements ClientAdapter {
             successfulFtpSend = performSingleUploadAttempt(fileName, inputStream);
         }
         if (!successfulFtpSend) {
-            throw new ClientAdapterException(String.format("Upload failed after %s retires", maxRetryCount));
+            throw new ClientAdapterException(String.format("Upload of file %s failed after %d retires", fileName, maxRetryCount));
         }
     }
 
