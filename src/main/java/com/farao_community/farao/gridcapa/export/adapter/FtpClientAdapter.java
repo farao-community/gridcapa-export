@@ -41,7 +41,7 @@ public class FtpClientAdapter implements ClientAdapter {
         final int maxRetryCount = ftpConfigurationProperties.getRetryCount();
         final int retrySleep = ftpConfigurationProperties.getRetrySleep();
         boolean successfulFtpSend = false;
-        while (performedRetries < maxRetryCount && !successfulFtpSend) {
+        while (performedRetries <= maxRetryCount && !successfulFtpSend) {
             try {
                 TimeUnit.SECONDS.sleep((long) performedRetries * retrySleep);
             } catch (InterruptedException ie) {
@@ -51,7 +51,7 @@ public class FtpClientAdapter implements ClientAdapter {
             successfulFtpSend = performSingleUploadAttempt(fileName, inputStream);
         }
         if (!successfulFtpSend) {
-            throw new ClientAdapterException(String.format("Upload of file %s failed after %d retires", fileName, maxRetryCount));
+            throw new ClientAdapterException(String.format("Upload of file %s failed after %d retries", fileName, maxRetryCount));
         }
     }
 
