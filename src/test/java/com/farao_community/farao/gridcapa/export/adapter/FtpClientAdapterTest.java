@@ -7,9 +7,7 @@
 package com.farao_community.farao.gridcapa.export.adapter;
 
 import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
