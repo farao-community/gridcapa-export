@@ -65,7 +65,7 @@ public class FtpClientAdapter implements ClientAdapter {
             int reply = ftp.getReplyCode();
             if (!FTPReply.isPositiveCompletion(reply)) {
                 ftp.disconnect();
-                throw new IOException("Exception in connecting to FTP Server");
+                return false;
             }
             ftp.login(ftpConfigurationProperties.getAccessKey(), ftpConfigurationProperties.getSecretKey());
             LOGGER.info("Connection established");
