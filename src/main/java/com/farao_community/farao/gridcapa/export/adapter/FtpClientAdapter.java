@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mohamed BenRejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
@@ -36,6 +37,26 @@ public class FtpClientAdapter implements ClientAdapter {
     }
 
     public void upload(String fileName, InputStream inputStream) throws ClientAdapterException {
+        int performedRetries = 0;
+        final int maxRetryCount = ftpConfigurationProperties.getRetryCount();
+        final int retrySleep = ftpConfigurationProperties.getRetrySleep();
+        boolean successfulFtpSend = false;
+        while (performedRetries <= maxRetryCount && !successfulFtpSend) {
+            try {
+                TimeUnit.SECONDS.sleep((long) performedRetries * retrySleep);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            performedRetries++;
+            successfulFtpSend = performSingleUploadAttempt(fileName, inputStream);
+        }
+        if (!successfulFtpSend) {
+            throw new ClientAdapterException(String.format("Upload of file %s failed after %d retries", fileName, maxRetryCount));
+        }
+    }
+
+    private boolean performSingleUploadAttempt(String fileName, InputStream inputStream) {
+        boolean successFlag = false;
         try {
             FTPClient ftp = new FTPClient(); // NOSONAR
             LOGGER.info("Attempt to connect to FTP server");
@@ -44,7 +65,7 @@ public class FtpClientAdapter implements ClientAdapter {
             int reply = ftp.getReplyCode();
             if (!FTPReply.isPositiveCompletion(reply)) {
                 ftp.disconnect();
-                throw new IOException("Exception in connecting to FTP Server");
+                return false;
             }
             ftp.login(ftpConfigurationProperties.getAccessKey(), ftpConfigurationProperties.getSecretKey());
             LOGGER.info("Connection established");
@@ -54,7 +75,7 @@ public class FtpClientAdapter implements ClientAdapter {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);  // required because ASCII is the default file type, otherwise zip will be corrupted
             LOGGER.info("Attempt to copy {} file to FTP server", fileName);
-            boolean successFlag = ftp.storeFile(fileName, inputStream);
+            successFlag = ftp.storeFile(fileName, inputStream);
             if (successFlag) {
                 LOGGER.info("File {} copied successfully to FTP server", fileName);
             } else {
@@ -63,9 +84,10 @@ public class FtpClientAdapter implements ClientAdapter {
 
             ftp.disconnect();
             LOGGER.info("Connection closed");
+            return successFlag;
         } catch (IOException e) {
-            LOGGER.error("Fail during upload");
-            throw new ClientAdapterException(e);
+            LOGGER.error("Fail during upload", e);
+            return successFlag;
         }
     }
 }

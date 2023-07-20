@@ -22,12 +22,17 @@ public class FtpConfigurationProperties {
     private String secretKey;
     private String remoteRelativeDestinationDirectory;
 
-    public FtpConfigurationProperties(String host, int port, String accessKey, String secretKey, String remoteRelativeDestinationDirectory) {
+    private int retryCount;
+    private int retrySleep;
+
+    public FtpConfigurationProperties(String host, int port, String accessKey, String secretKey, String remoteRelativeDestinationDirectory, int retryCount, int retrySleep) {
         this.host = host;
         this.port = port;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.remoteRelativeDestinationDirectory = remoteRelativeDestinationDirectory;
+        this.retryCount = retryCount;
+        this.retrySleep = retrySleep;
     }
 
     public String getHost() {
@@ -48,5 +53,13 @@ public class FtpConfigurationProperties {
 
     public String getRemoteRelativeDestinationDirectory() {
         return remoteRelativeDestinationDirectory;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public int getRetrySleep() {
+        return retrySleep;
     }
 }
