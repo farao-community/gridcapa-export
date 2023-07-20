@@ -98,6 +98,7 @@ public class GridcapaExportService {
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
         String fileOutputName = getFileNameFromResponseEntity(responseEntity);
         try {
+            LOGGER.info("Uploading file {} to ftp", fileOutputName);
             clientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
         } catch (ClientAdapterException e) {
             businessLogger.error("exception occurred while uploading generated results to server, details: {}", e.getMessage());
@@ -108,12 +109,14 @@ public class GridcapaExportService {
      * Sometimes the files are not validated immediately with task status update, we retry to fetch task
      */
     private TaskDto fetchOutputsAvailable(TaskDto taskDto) {
+        LOGGER.info("Received a task status {} event for timestamp: {}, trying to fetch result within the configured interval.", taskDto.getStatus(), taskDto.getTimestamp());
         TaskDto updatedTaskDto;
         boolean allOutputsAvailable = checkAllOutputFileValidated(taskDto);
         int retryCounter = 0;
         do {
             try {
                 TimeUnit.SECONDS.sleep(fetchTaskIntervalInSeconds);
+                LOGGER.info("Fetching outputs for iteration number {}", retryCounter);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOGGER.error("Couldn't interrupt thread : {}", e.getMessage());
