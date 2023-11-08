@@ -101,7 +101,7 @@ public class GridcapaExportService {
             LOGGER.info("Uploading file {} to ftp", fileOutputName);
             clientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
         } catch (ClientAdapterException e) {
-            businessLogger.error("exception occurred while uploading generated results to server, details: {}", e.getMessage());
+            businessLogger.error("Exception occurred while uploading generated results to server, details: {}", e.getMessage());
         }
     }
 
