@@ -8,7 +8,7 @@
         <version>1.5.0</version>
     </parent>
     <artifactId>gridcapa-export</artifactId>
-    <version>1.6.1-SNAPSHOT</version>
+    <version>1.6.1</version>
     <name>gridcapa-export</name>
     <description>Service responsible of exporting gridcapa outputs when available to an FTP server.</description>
 
