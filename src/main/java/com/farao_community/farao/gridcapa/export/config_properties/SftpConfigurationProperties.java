@@ -7,13 +7,11 @@
 package com.farao_community.farao.gridcapa.export.config_properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 
 /**
  * @author Oualid Aloui {@literal <oualid.aloui at rte-france.com>}
  */
 
-@ConstructorBinding
 @ConfigurationProperties("sftp")
 public class SftpConfigurationProperties {
 

@@ -44,9 +44,9 @@ class GridcapaExportApplicationTest {
     @Test
     void whenSendMessages() {
 
-        TaskDto taskDto1 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>());
-        TaskDto taskDto2 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f7"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>());
-        TaskDto taskDto3 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f8"), OffsetDateTime.parse("2022-04-27T10:12Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>());
+        TaskDto taskDto1 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), OffsetDateTime.parse("2022-04-27T10:10Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>(), new ArrayList<>());
+        TaskDto taskDto2 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f7"), OffsetDateTime.parse("2022-04-27T10:11Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>(), new ArrayList<>());
+        TaskDto taskDto3 = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f8"), OffsetDateTime.parse("2022-04-27T10:12Z"), TaskStatus.SUCCESS, createProcessFileList(1, 1), createProcessFileList(1, 1), new ArrayList<>(), new ArrayList<>());
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z/file/AA0", byte[].class)).thenReturn(ResponseEntity.ok("test1".getBytes(StandardCharsets.UTF_8)));
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:11Z/file/AA0", byte[].class)).thenThrow(RuntimeException.class);
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:12Z/file/AA0", byte[].class)).thenReturn(ResponseEntity.ok("test3".getBytes(StandardCharsets.UTF_8)));
