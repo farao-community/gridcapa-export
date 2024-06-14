@@ -41,3 +41,11 @@ logback:
   amqp:
     exchange: task-manager-logs-exchange
     routing-key: "#"
+
+export:
+  seperate-output-files: false
+  unzip-files:
+    - "CGM_ESFR"
+    - "CGM_FRES"
+    - "CGM_PTES"
+    - "CGM_ESPT"

@@ -7,6 +7,7 @@
 package com.farao_community.farao.gridcapa.export.service;
 
 import com.farao_community.farao.gridcapa.export.adapter.ClientAdapter;
+import com.farao_community.farao.gridcapa.export.config.UnzipExportFileConfiguration;
 import com.farao_community.farao.gridcapa.export.exception.ClientAdapterException;
 import com.farao_community.farao.gridcapa.task_manager.api.ProcessFileStatus;
 import com.farao_community.farao.gridcapa.task_manager.api.TaskDto;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +52,13 @@ public class GridcapaExportService {
     private int fetchTaskIntervalInSeconds;
     @Value("${export.seperate-output-files:false}")
     private boolean seperateOutputFiles;
+    private final List<String> unzipFiles;
 
-    public GridcapaExportService(RestTemplate restTemplate, ClientAdapter clientAdapter, Logger businessLogger) {
+    public GridcapaExportService(RestTemplate restTemplate, ClientAdapter clientAdapter, Logger businessLogger, UnzipExportFileConfiguration unzipConfig) {
         this.restTemplate = restTemplate;
         this.clientAdapter = clientAdapter;
         this.businessLogger = businessLogger;
+        this.unzipFiles = unzipConfig.getUnzipFiles();
     }
 
     @Bean
@@ -85,21 +89,29 @@ public class GridcapaExportService {
             taskDto.getOutputs().stream().filter(processFileDto -> processFileDto.getProcessFileStatus().equals(ProcessFileStatus.VALIDATED))
                     .forEach(processFileDto -> {
                         ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), processFileDto.getFileType());
-                        uploadToFtpFromResponseEntity(responseEntity);
+                        uploadToFtpFromResponseEntity(responseEntity, mustUnzip(processFileDto.getFileType()));
                     });
             ResponseEntity<byte[]> responseEntity = getResponseEntityByFileType(taskDto.getTimestamp(), "LOGS");
-            uploadToFtpFromResponseEntity(responseEntity);
+            uploadToFtpFromResponseEntity(responseEntity, false);
         } else {
             ResponseEntity<byte[]> responseEntity = getResponseEntity(taskDto.getTimestamp());
-            uploadToFtpFromResponseEntity(responseEntity);
+            uploadToFtpFromResponseEntity(responseEntity, false);
         }
     }
 
-    private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity) {
+    private boolean mustUnzip(String fileType) {
+        if (unzipFiles == null || unzipFiles.isEmpty()) {
+            return false;
+        } else {
+            return unzipFiles.contains(fileType);
+        }
+    }
+
+    private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity, boolean unzip) {
         String fileOutputName = getFileNameFromResponseEntity(responseEntity);
         try {
             LOGGER.info("Uploading file {} to ftp", fileOutputName);
-            clientAdapter.upload(fileOutputName, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
+            clientAdapter.upload(fileOutputName, unzip, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
         } catch (ClientAdapterException e) {
             businessLogger.error("Exception occurred while uploading generated results to server, details: {}", e.getMessage());
         }
