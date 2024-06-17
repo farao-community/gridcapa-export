@@ -6,6 +6,7 @@
  */
 package com.farao_community.farao.gridcapa.export;
 
+import com.farao_community.farao.gridcapa.export.config.UnzipExportFileConfiguration;
 import com.farao_community.farao.gridcapa.export.config_properties.FtpConfigurationProperties;
 import com.farao_community.farao.gridcapa.export.config_properties.SftpConfigurationProperties;
 import org.springframework.boot.SpringApplication;
@@ -18,7 +19,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  */
 @SuppressWarnings("hideutilityclassconstructor")
 @SpringBootApplication
-@EnableConfigurationProperties({FtpConfigurationProperties.class, SftpConfigurationProperties.class})
+@EnableConfigurationProperties({FtpConfigurationProperties.class, SftpConfigurationProperties.class, UnzipExportFileConfiguration.class})
 public class GridcapaExportApplication {
     public static void main(String[] args) {
         SpringApplication.run(GridcapaExportApplication.class, args);

@@ -58,7 +58,7 @@ public class GridcapaExportService {
         this.restTemplate = restTemplate;
         this.clientAdapter = clientAdapter;
         this.businessLogger = businessLogger;
-        this.unzipFiles = unzipConfig.getUnzipFiles();
+        this.unzipFiles = unzipConfig.unzipFiles();
     }
 
     @Bean
@@ -100,7 +100,7 @@ public class GridcapaExportService {
     }
 
     private boolean mustUnzip(String fileType) {
-        return unzipFiles == null || unzipFiles.contains(fileType);
+        return unzipFiles != null && unzipFiles.contains(fileType);
     }
 
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity, boolean unzip) {
