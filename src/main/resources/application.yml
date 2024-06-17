@@ -54,10 +54,6 @@ sftp:
 export:
   seperate-output-files: false
   unzip-files:
-    - CGM_ESFR
-    - CGM_FRES
-    - CGM_PTES
-    - CGM_ESPT
 
 logback:
   amqp:
