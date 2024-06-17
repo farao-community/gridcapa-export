@@ -31,7 +31,7 @@ import java.util.zip.ZipInputStream;
 @ConditionalOnProperty(prefix = "ftp", name = "active", havingValue = "true")
 public class FtpClientAdapter implements ClientAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
-    public static final String ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER = "Attempt to copy {} file to FTP server";
+    private static final String ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER = "Attempt to copy {} file to FTP server";
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
 
@@ -88,14 +88,14 @@ public class FtpClientAdapter implements ClientAdapter {
                         final String zippedFileName = zipEntry.getName();
                         LOGGER.info(ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER, zippedFileName);
                         successFlag  = ftp.storeFile(zippedFileName, zipInputStream) && successFlag;
-                        logSuccces(successFlag, zippedFileName);
+                        logSuccess(successFlag, zippedFileName);
                         zipEntry = zipInputStream.getNextEntry();
                     }
                 }
             } else {
                 LOGGER.info(ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER, fileName);
                 successFlag = ftp.storeFile(fileName, inputStream);
-                logSuccces(successFlag, fileName);
+                logSuccess(successFlag, fileName);
             }
             ftp.disconnect();
             LOGGER.info("Connection closed");
@@ -106,11 +106,11 @@ public class FtpClientAdapter implements ClientAdapter {
         }
     }
 
-    private static void logSuccces(boolean isSuccessful, String fileName) {
+    private static void logSuccess(boolean isSuccessful, String fileName) {
         if (isSuccessful) {
             LOGGER.info("File {} copied successfully to FTP server", fileName);
         } else {
-            LOGGER.error("File {} couldn't be copied successfully to FTP server", fileName);
+            LOGGER.error("File {} couldn't be copied to FTP server", fileName);
         }
     }
 }

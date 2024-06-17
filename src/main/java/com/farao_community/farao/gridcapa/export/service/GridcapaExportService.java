@@ -100,11 +100,7 @@ public class GridcapaExportService {
     }
 
     private boolean mustUnzip(String fileType) {
-        if (unzipFiles == null || unzipFiles.isEmpty()) {
-            return false;
-        } else {
-            return unzipFiles.contains(fileType);
-        }
+        return unzipFiles == null || unzipFiles.contains(fileType);
     }
 
     private void uploadToFtpFromResponseEntity(ResponseEntity<byte[]> responseEntity, boolean unzip) {
