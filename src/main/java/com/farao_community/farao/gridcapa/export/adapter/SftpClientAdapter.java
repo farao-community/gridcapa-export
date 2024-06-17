@@ -36,7 +36,7 @@ public class SftpClientAdapter implements ClientAdapter {
         this.sftpConfigurationProperties = sftpConfigurationProperties;
     }
 
-    public void upload(String fileName, InputStream inputStream) throws ClientAdapterException {
+    public void upload(String fileName, boolean unzip, InputStream inputStream) throws ClientAdapterException {
         try {
             JSch jsch = new JSch();
             Session jschSession = jsch.getSession(sftpConfigurationProperties.getAccessKey(), sftpConfigurationProperties.getHost(), sftpConfigurationProperties.getPort());

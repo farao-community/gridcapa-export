@@ -16,6 +16,6 @@ import java.io.InputStream;
 
 public interface ClientAdapter {
 
-    void upload(String fileName, InputStream inputStream) throws ClientAdapterException;
+    void upload(String fileName, boolean unzip, InputStream inputStream) throws ClientAdapterException;
 
 }
