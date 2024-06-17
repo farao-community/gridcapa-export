@@ -12,6 +12,8 @@ import java.util.List;
 
 /**
  * @author Marc Schwitzguébel {@literal <marc.schwitzguebel at rte-france.com>}
+ *
+ * Takes a List of strings as parameter for enabling unzipping to ftp certain file types
  */
 @ConfigurationProperties(prefix = "export")
 public record UnzipExportFileConfiguration(List<String> unzipFiles) {

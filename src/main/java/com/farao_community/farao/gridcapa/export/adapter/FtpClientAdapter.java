@@ -31,7 +31,6 @@ import java.util.zip.ZipInputStream;
 @ConditionalOnProperty(prefix = "ftp", name = "active", havingValue = "true")
 public class FtpClientAdapter implements ClientAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FtpClientAdapter.class);
-    private static final String ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER = "Attempt to copy {} file to FTP server";
 
     private final FtpConfigurationProperties ftpConfigurationProperties;
 
@@ -59,7 +58,7 @@ public class FtpClientAdapter implements ClientAdapter {
     }
 
     private boolean performSingleUploadAttempt(String fileName, boolean unzip, InputStream inputStream) {
-        boolean successFlag = false;
+        boolean successFlag;
         try {
             FTPClient ftp = new FTPClient(); // NOSONAR
             LOGGER.info("Attempt to connect to FTP server");
@@ -78,22 +77,10 @@ public class FtpClientAdapter implements ClientAdapter {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);  // required because ASCII is the default file type, otherwise zip will be corrupted
             if (unzip) {
-                final String directory = fileName.replace(".zip", "");
-                ftp.makeDirectory(directory);
-                ftp.changeWorkingDirectory(directory);
-                try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
-                    ZipEntry zipEntry = zipInputStream.getNextEntry();
-                    successFlag = true;
-                    while (zipEntry != null) {
-                        final String zippedFileName = zipEntry.getName();
-                        LOGGER.info(ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER, zippedFileName);
-                        successFlag  = ftp.storeFile(zippedFileName, zipInputStream) && successFlag;
-                        logSuccess(successFlag, zippedFileName);
-                        zipEntry = zipInputStream.getNextEntry();
-                    }
-                }
+                LOGGER.info("Attempt to unzip {} to FTP server", fileName);
+                successFlag = unzipAndStoreFiles(ftp, fileName, inputStream);
             } else {
-                LOGGER.info(ATTEMPT_TO_COPY_FILE_TO_FTP_SERVER, fileName);
+                logAttemptStoreFile(fileName);
                 successFlag = ftp.storeFile(fileName, inputStream);
                 logSuccess(successFlag, fileName);
             }
@@ -102,8 +89,31 @@ public class FtpClientAdapter implements ClientAdapter {
             return successFlag;
         } catch (IOException e) {
             LOGGER.error("Fail during upload", e);
-            return successFlag;
+            return false;
         }
+    }
+
+    private boolean unzipAndStoreFiles(FTPClient ftp, String fileName, InputStream inputStream) throws IOException {
+        final String directory = fileName.replace(".zip", "");
+        ftp.makeDirectory(directory);
+        ftp.changeWorkingDirectory(directory);
+        boolean successFlag = true;
+        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            while (zipEntry != null) {
+                final String zippedFileName = zipEntry.getName();
+                logAttemptStoreFile(zippedFileName);
+                final boolean oneFileSuccessFlag = ftp.storeFile(zippedFileName, zipInputStream);
+                logSuccess(oneFileSuccessFlag, zippedFileName);
+                successFlag = oneFileSuccessFlag && successFlag;
+                zipEntry = zipInputStream.getNextEntry();
+            }
+        }
+        return successFlag;
+    }
+
+    private static void logAttemptStoreFile(String fileName) {
+        LOGGER.info("Attempt to copy {} file to FTP server", fileName);
     }
 
     private static void logSuccess(boolean isSuccessful, String fileName) {

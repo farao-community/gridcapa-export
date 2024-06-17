@@ -53,6 +53,7 @@ sftp:
 
 export:
   seperate-output-files: false
+  # Takes a List of strings as parameter for enabling unzipping to ftp certain file types
   unzip-files:
 
 logback:
