@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.farao-community.farao</groupId>
         <artifactId>farao-parent-ws</artifactId>
-        <version>1.10.1</version>
+        <version>1.11.0</version>
     </parent>
     <artifactId>gridcapa-export</artifactId>
     <version>1.11.0-SNAPSHOT</version>
@@ -16,7 +16,6 @@
         <task-manager.version>1.33.0</task-manager.version>
         <apache-common-net.version>3.9.0</apache-common-net.version>
         <mock-ftp-server.version>2.7.1</mock-ftp-server.version>
-        <logstash.version>4.9</logstash.version>
         <jsch.version>0.1.55</jsch.version>
     </properties>
 
@@ -60,7 +59,6 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>${logstash.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
