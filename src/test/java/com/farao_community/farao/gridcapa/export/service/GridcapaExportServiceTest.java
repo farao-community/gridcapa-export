@@ -15,6 +15,7 @@ import com.farao_community.farao.gridcapa.task_manager.api.TaskStatus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -165,6 +166,33 @@ class GridcapaExportServiceTest {
         Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/2022-04-27T10:10Z", TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
         outputsToFtpService.exportOutputsForTask(taskDto);
         Mockito.verify(ftpClientAdapter, Mockito.never()).upload(Mockito.anyString(), Mockito.eq(true), Mockito.any());
+    }
+
+    @Test
+    void checkUploadedFileNameSuffixWhenNotSeparated() throws Exception {
+        ReflectionTestUtils.setField(outputsToFtpService, "seperateOutputFiles", false);
+        final HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        header.put("Content-Disposition", List.of("filename=\"out.zip\""));
+        final ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(
+                "zip-body".getBytes(StandardCharsets.UTF_8),
+                header,
+                HttpStatus.OK
+        );
+        final OffsetDateTime ts = OffsetDateTime.parse("2022-04-27T10:10Z");
+        final TaskDto taskDto = new TaskDto(UUID.fromString("1fdda469-53e9-4d63-a533-b935cffdd2f6"), ts, TaskStatus.SUCCESS,
+                                            createProcessFileList(2, 2), createProcessFileList(2, 2), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/" + ts + "/outputs", byte[].class)).thenReturn(responseEntity);
+        Mockito.when(restTemplate.getForEntity("http://localhost:8080/tasks/" + ts, TaskDto.class)).thenReturn(ResponseEntity.of(Optional.of(taskDto)));
+
+        outputsToFtpService.exportOutputsForTask(taskDto);
+
+        final ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(ftpClientAdapter, Mockito.times(1)).upload(nameCaptor.capture(), Mockito.eq(false), Mockito.any());
+        final String uploaded = nameCaptor.getValue();
+        // Expect: out_YYYY-MM-DD_HHMMSS.zip (UTC runtime timestamp)
+        Assertions.assertTrue(uploaded.matches("^out_\\d{4}-\\d{2}-\\d{2}_\\d{6}\\.zip$"),
+                "Uploaded filename should have UTC runtime suffix before extension, but was: " + uploaded);
     }
 
     private List<ProcessFileDto> createProcessFileList(int total, int nbValidated) {

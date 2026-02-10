@@ -25,6 +25,9 @@ import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,7 +107,21 @@ public class GridcapaExportService {
     }
 
     private void uploadToFtpFromResponseEntity(final ResponseEntity<byte[]> responseEntity, final boolean unzip) {
-        final String fileOutputName = getFileNameFromResponseEntity(responseEntity);
+        String fileOutputName = getFileNameFromResponseEntity(responseEntity);
+        // When not separating output files, append runtime UTC timestamp suffix before the extension
+        if (!seperateOutputFiles) {
+            final String suffix = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss").format(ZonedDateTime.now(ZoneOffset.UTC));
+            if (fileOutputName.endsWith(".zip")) {
+                final int dotIndex = fileOutputName.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    fileOutputName = fileOutputName.substring(0, dotIndex) + "_" + suffix + fileOutputName.substring(dotIndex);
+                } else {
+                    fileOutputName = fileOutputName + "_" + suffix;
+                }
+            } else {
+                fileOutputName = fileOutputName + "_" + suffix;
+            }
+        }
         try {
             LOGGER.info("Uploading file {} to ftp", fileOutputName);
             clientAdapter.upload(fileOutputName, unzip, new ByteArrayInputStream(Objects.requireNonNull(responseEntity.getBody())));
